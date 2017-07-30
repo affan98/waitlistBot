@@ -2,13 +2,13 @@ import time
 from urllib.request import Request, urlopen
 from twilio.rest import TwilioRestClient
 
-accountSID = "***REMOVED***" #REPLACE THIS
+accountSID = "" #REPLACE THIS
 
-authToken = "***REMOVED***" #REPLACE THIS
+authToken = "" #REPLACE THIS
 
-myNumber = "***REMOVED***" #REPLACE THIS
+myNumber = "" #REPLACE THIS
 
-twilioNumber = "***REMOVED***"  #REPLACE THIS
+twilioNumber = ""  #REPLACE THIS
 
 waitlistHTML = "<input type=\"hidden\" name=\"sectionId\" value=\""
 siteURL = "https://ntst.umd.edu/soc/search?courseId=HIST289Y&sectionId=&termId=201708&_openSectionsOnly=on&creditCompare=&credits=&courseLevelFilter=ALL&instructor=&_facetoface=on&_blended=on&_online=on&courseStartCompare=&courseStartHour=&courseStartMin=&courseStartAM=&courseEndHour=&courseEndMin=&courseEndAM=&teachingCenter=ALL&_classDay1=on&_classDay2=on&_classDay3=on&_classDay4=on&_classDay5=on"
@@ -23,7 +23,7 @@ sections = { "0101" : 1, "0102" : 1,  "0103" : 1, "0104" : 1, "0105" : 1, "0106"
 
 def textMyself(message):
 	twilioCli = TwilioRestClient(accountSID, authToken)
-	twilioCli.messages.create(body=message, from_=twilioNumber, to=myNumbepip
+	twilioCli.messages.create(body=message, from_=twilioNumber, to=myNumbepip)
 
 def textAffan(message):
 	twilioCli = TwilioRestClient(accountSID, authToken)

@@ -33,17 +33,26 @@ except getopt.GetoptError as err:
         usage()
         sys.exit(2)
 
+checkClass = False
+checkSection = False
+
 for o, a in opts:
 	
 	if o == '-c':
+		checkClass = True
 		classToCheck = a
 	elif o == '-s':
+		checkSection = True
 		for sect in a.split():
 			sections[sect] = 1
 	elif o == '-t':
 		timecheck = True
 	else:
 		assert False,  'Unhandled Option'
+
+if not checkClass or not checkSection:
+	print('You must specify both a class(-c) and class sections(-s). sections must be input as there 4 digit codes seperated by spaces')
+	sys.exit(2)
 
 #search query for the class
 siteURL = "https://ntst.umd.edu/soc/search?courseId=" + classToCheck + "&sectionId=&termId=201708&_openSectionsOnly=on&creditCompare=&credits=&courseLevelFilter=ALL&instructor=&_faceto" + \

@@ -1,115 +1,113 @@
+# Dependencies
 import time
 import getopt
 import sys
 import string
 from urllib.request import Request, urlopen
 from twilio.rest import TwilioRestClient
+try: # For Twilio auth
+    from credentials import accountSID, authToken, myNumber, twilioNumber
+except ImportError:
+    raise IOError("You must include a credentials.py file with the following fields: accountSID, authToken, myNumber, and twilioNumber. See README.")
 
-accountSID = "" #REPLACE THIS
-
-authToken = "" #REPLACE THIS
-
-myNumber = "" #REPLACE THIS
-
-twilioNumber = ""  #REPLACE THIS
-
-#to find the location of each section
-waitlistHTML = "<spanclass=\"section-id\">"
-seatHTML = "<spanclass=\"open-seats-count\">"
-
+# To find the location of each section
+waitlistHTML = '<spanclass="section-id">'
+seatHTML = '<spanclass="open-seats-count">'
 
 secondsInADay = 86400
 
-classToCheck = ''
+classToCheck = ""
 sections = {}
 timecheck = False
 
-#Parse command line arguments
+# Parse command line arguments
 try:
-	opts, args = getopt.getopt(sys.argv[1:],"tc:s:")
-except getopt.GetoptError as err:
-        # print help information and exit:
-        print(err) # will print something like "option -a not recognized"
-        usage()
-        sys.exit(2)
+    (opts, args) = getopt.getopt(sys.argv[1:], 'tc:s:')
+except getopt.GetoptError, err:
+    # Print help information and exit:
+    print err  # Will print something like "option -a not recognized"
+    usage()
+    sys.exit(2)
 
 checkClass = False
 checkSection = False
 
-for o, a in opts:
-	
-	if o == '-c':
-		checkClass = True
-		classToCheck = a
-	elif o == '-s':
-		checkSection = True
-		for sect in a.split():
-			sections[sect] = 1
-	elif o == '-t':
-		timecheck = True
-	else:
-		assert False,  'Unhandled Option'
+for (o, a) in opts:
+    if o == '-c':
+        checkClass = True
+        classToCheck = a
+    elif o == '-s':
+        checkSection = True
+        for sect in a.split():
+            sections[sect] = 1
+    elif o == '-t':
+        timecheck = True
+    else:
+        assert False, "Unhandled Option"
 
 if not checkClass or not checkSection:
-	print('You must specify both a class(-c) and class sections(-s). sections must be input as there 4 digit codes seperated by spaces')
-	sys.exit(2)
+    print "You must specify both a class(-c) and class sections(-s). sections must be input as there 4 digit codes seperated by spaces"
+    sys.exit(2)
 
-#search query for the class
-siteURL = "https://ntst.umd.edu/soc/search?courseId=" + classToCheck + "&sectionId=&termId=201708&_openSectionsOnly=on&creditCompare=&credits=&courseLevelFilter=ALL&instructor=&_faceto" + \
-          "face=on&_blended=on&_online=on&courseStartCompare=&courseStartHour=&courseStartMin=&courseStartAM=&courseEndHour=&courseEndMin=&courseEndAM=&teachingCenter=ALL&_classDay1=on&" + \
-          "_classDay2=on&_classDay3=on&_classDay4=on&_classDay5=on"
+# Search query for the class
+SITE_URL = "https://ntst.umd.edu/soc/search?courseId={}&sectionId=&termId=201708&_openSectionsOnly=on&creditCompare=&credits=&courseLevelFilter=ALL&instructor=&_facetoface=on&_blended=on&_online=on&courseStartCompare=&courseStartHour=&courseStartMin=&courseStartAM=&courseEndHour=&courseEndMin=&courseEndAM=&teachingCenter=ALL&_classDay1=on&_classDay2=on&_classDay3=on&_classDay4=on&_classDay5=on".format(classToCheck)
 
-#function to use twilio API to send text message
+
+# Function to use twilio API to send text message
 def textMyself(message):
-	twilioCli = TwilioRestClient(accountSID, authToken)
-	twilioCli.messages.create(body=message, from_=twilioNumber, to=myNumber)
+    twilioCli = TwilioRestClient(accountSID, authToken)
+    twilioCli.messages.create(body=message, from_=twilioNumber,
+                              to=myNumber)
 
 
-#used for 24hr checkin
+# Used for 24hr checkin
 currentTime = time.mktime(time.gmtime())
 checkTime = currentTime + secondsInADay
 
+def main():
+    currentTime = time.mktime(time.gmtime())
+
+    req = Request(SITE_URL, headers={'User-Agent': 'Mozilla/5.0'})
+
+    # Gets the HTML from the UMD schedule of classes and removes white space
+
+    with urlopen(req) as response:
+        siteHTML = response.read()
+        encoding = response.headers.get_content_charset('utf-8')
+        siteHTML = siteHTML.decode(encoding)
+        siteHTML = "".join(siteHTML.split())
+
+    # Updates the dictionary with the correct number of seats for each section
+
+    for key in sections:
+        sectionHTML = waitlistHTML + key
+        location = siteHTML.find(sectionHTML)
+        location = location + siteHTML[location:].find(seatHTML)
+        location += len(seatHTML)
+
+        try:
+            numberOfSeats = int(siteHTML[location])
+        except ValueError:
+            continue
+        finally:
+            siteHTML = siteHTML[location:]
+
+        sections[key] = numberOfSeats
+
+    # If a section has an open seat then send a message
+
+    for key in sections:
+        if sections[key] != 0:
+            textMyself("A seat has opened up for {} {}. Get it quick!".format(classToCheck, key))
+            time.sleep(540)  # Wait 10 minutes so this doesnt keep sending you texts non stop
+
+    if timecheck and currentTime >= checkTime:
+        checkTime = currentTime + secondsInADay
+        textMyself("The waitlist bot is still running")
+
+# Run main loop
 while True:
+    main()
 
-	currentTime = time.mktime(time.gmtime())
-
-	req = Request(siteURL, headers={'User-Agent': 'Mozilla/5.0'})
-
-	#Gets the HTML from the UMD schedule of classes and removes white space
-	with urlopen(req) as response:
-		siteHTML = response.read()
-		encoding = response.headers.get_content_charset('utf-8')
-		siteHTML = siteHTML.decode(encoding)
-		siteHTML = ''.join(siteHTML.split())
-
-	
-	#updates the dictionary with the correct number of seats for each section
-	for key in sections:
-		sectionHTML = waitlistHTML + key
-		location = siteHTML.find(sectionHTML)
-		location = location + siteHTML[location:].find(seatHTML)
-		location += len(seatHTML)
-		
-		try:
-			numberOfSeats = int(siteHTML[location])
-		except ValueError:
-			continue
-		finally:
-			siteHTML = siteHTML[location:]
-
-
-		sections[key] = numberOfSeats
-
-	#If a section has an open seat then send a message
-	for key in sections:
-		if sections[key] != 0:
-			textMyself("A seat has opened up for "+ classToCheck + ' ' + key +". Get it quick!")
-			time.sleep(540) # wait 10 minutes so this doesnt keep sending you texts non stop
-
-	if timecheck and currentTime >= checkTime:
-		checkTime = currentTime + secondsInADay
-		textMyself("The waitlist bot is still running")
-
-
-	#No need to check every second so instead check every minute
-	time.sleep(60)
+    # No need to check every second so instead check every minute
+    time.sleep(60)

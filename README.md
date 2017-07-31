@@ -6,9 +6,9 @@ This script will monitor the UMD Schedule of classes and text you when a seat op
 ### Set up
 Get a free Twilio account at https://www.twilio.com/try-twilio
 
-Create a file called `config.py` and include your account SID, auth token, Twilio number (you get one free as part of your account), and the number at which you want to receive notifications.
+Create a file called `credentials.py` and include your account SID, auth token, Twilio number (you get one free as part of your account), and the number at which you want to receive notifications.
 
-`config.py`
+`credentials.py`
 ```Python
 Account_SID = "Your SID here"
 Auth_TOKEN = "Your Auth token here"

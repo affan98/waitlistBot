@@ -94,12 +94,13 @@ def textMyself(message):
                               to=myNumber)
 
 
-# Used for 24hr checkin
-currentTime = time.mktime(time.gmtime())
-checkTime = currentTime + secondsInADay
+
 
 def main():
+	# Used for 24hr checkin
     currentTime = time.mktime(time.gmtime())
+    checkTime = currentTime + secondsInADay
+    
     req = Request(SITE_URL, headers={'User-Agent': 'Mozilla/5.0'})
 
     # Gets the HTML from the UMD schedule of classes and removes white space

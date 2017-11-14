@@ -30,6 +30,11 @@ To run the script you must specify a class name and which sections you want to c
 $ python3 waitlistBot.py -c "MATH241" -s "0101 0201 0405"
 ```
 
+```
+use -t to tell the bot to send you a text every 24 hours. This is useful for making sure the bot is still running
+use -p to choose a semester. If -p is not given the bot will default to the next fall/spring semester. EX: -p "summer2018"
+```
+
 To run the script in the background:
 ```
 $ nohup python3 waitlistBot.py -c "MATH241" -s "0101 0201 0405" &

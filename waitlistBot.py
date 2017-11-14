@@ -1,12 +1,8 @@
 # Dependencies
-import time
-import getopt
-import sys
-import string
-import re
-import datetime
+import time, getopt, sys, string, re, datetime
 from urllib.request import Request, urlopen
 from twilio.rest import TwilioRestClient
+
 try: # For Twilio auth
     from credentials import accountSID, authToken, myNumber, twilioNumber
 except ImportError:
@@ -17,74 +13,8 @@ waitlistHTML = '<spanclass=\"section-id\">'
 seatHTML = '<spanclass=\"open-seats-count\">'
 
 secondsInADay = 86400
-now = datetime.datetime.now()
 
-classToCheck = ""
 sections = {}
-timecheck = False
-customSemester = False
-
-# Parse command line arguments
-try:
-    (opts, args) = getopt.getopt(sys.argv[1:], 'tc:s:p:')
-except (getopt.GetoptError, err):
-    # Print help information and exit:
-    print(err)  # Will print something like "option -a not recognized"
-    usage()
-    sys.exit(2)
-
-checkClass = False
-checkSection = False
-
-for (o, a) in opts:
-    if o == '-c':
-        checkClass = True
-        classToCheck = a
-    elif o == '-s':
-        checkSection = True
-        for sect in a.split():
-            sections[sect] = 1
-    elif o == '-t':
-        timecheck = True
-    elif o == '-p':
-    	customSemester = True
-    	match = re.search('(\w{4,6})(\d{4})',a)
-    	season = match.group(1).upper()
-    	year = match.group(2)
-
-    else:
-        assert False, "Unhandled Option"
-
-if not checkClass or not checkSection:
-    print("You must specify both a class(-c) and class sections(-s). sections must be input as there 4 digit codes seperated by spaces")
-    sys.exit(2)
-
-#custom semester can take any semester
-if customSemester:
-	if season == 'SPRING':
-		seasonNum = '01'
-	elif season == 'SUMMER':
-		seasonNum = '05'
-	elif season == 'FALL':
-		seasonNum = '08'
-	else:
-		seasonNum = '12'
-
-	term = year + seasonNum
-#otherwise default to either spring or fall
-else:
-	year = str(now.year)
-	month = now.month
-	if month >= 2 and month <= 9:
-		seasonNum = '08'
-	else:
-		seasonNum = '01'
-
-	term = year + seasonNum
-
-
-# Search query for the class
-SITE_URL = "https://ntst.umd.edu/soc/search?courseId={}&sectionId=&termId={}&_openSectionsOnly=on&creditCompare=&credits=&courseLevelFilter=ALL&instructor=&_facetoface=on&_blended=on&_online=on&courseStartCompare=&courseStartHour=&courseStartMin=&courseStartAM=&courseEndHour=&courseEndMin=&courseEndAM=&teachingCenter=ALL&_classDay1=on&_classDay2=on&_classDay3=on&_classDay4=on&_classDay5=on".format(classToCheck, term)
 
 
 # Function to use twilio API to send text message
@@ -93,15 +23,38 @@ def textMyself(message):
     twilioCli.messages.create(body=message, from_=twilioNumber,
                               to=myNumber)
 
+# Function to get the second paramater for the url
+def getTerm(customSemester, season, year):
+    now = datetime.datetime.now()
+    #custom semester can take any semester
+    if customSemester:
+    	if season == 'SPRING':
+    		seasonNum = '01'
+    	elif season == 'SUMMER':
+    		seasonNum = '05'
+    	elif season == 'FALL':
+    		seasonNum = '08'
+    	else:
+    		seasonNum = '12'
+
+    #otherwise default to either spring or fall
+    else:
+    	year = str(now.year)
+    	month = now.month
+    	if month >= 2 and month <= 9:
+    		seasonNum = '08'
+    	else:
+    		seasonNum = '01'
 
 
+    return year + seasonNum
 
-def checkSeats():
+# Checks if seat has opened up for a class
+def checkSeats(url, classToCheck):
 
-    req = Request(SITE_URL, headers={'User-Agent': 'Mozilla/5.0'})
+    req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
 
     # Gets the HTML from the UMD schedule of classes and removes white space
-
     with urlopen(req) as response:
         siteHTML = response.read()
         encoding = response.headers.get_content_charset('utf-8')
@@ -109,7 +62,6 @@ def checkSeats():
         siteHTML = "".join(siteHTML.split())
 
     # Updates the dictionary with the correct number of seats for each section
-
     for key in sections:
         sectionHTML = waitlistHTML + key
         location = siteHTML.find(sectionHTML)
@@ -127,26 +79,78 @@ def checkSeats():
         sections[key] = numberOfSeats
 
     # If a section has an open seat then send a message
-
     for key in sections:
         if sections[key] != 0:
             textMyself("A seat has opened up for {} {}. Get it quick!".format(classToCheck, key))
             time.sleep(540)  # Wait 10 minutes so this doesnt keep sending you texts non stop
 
 
+def main():
 
-# Used for 24hr checkin
-currentTime = time.mktime(time.gmtime())
-checkTime = currentTime + secondsInADay
+    classToCheck = ""
+    season = ""
+    year = ""
 
-while True:
-    checkSeats()
+    # Parse command line arguments
+    try:
+        (opts, args) = getopt.getopt(sys.argv[1:], 'tc:s:p:')
+    except (getopt.GetoptError, err):
+        # Print help information and exit:
+        print(err)  # Will print something like "option -a not recognized"
+        usage()
+        sys.exit(2)
 
+    checkClass = False
+    checkSection = False
+    customSemester = False
+    timecheck = False
+
+    for (o, a) in opts:
+        if o == '-c':
+            checkClass = True
+            classToCheck = a
+        elif o == '-s':
+            checkSection = True
+            for sect in a.split():
+                sections[sect] = 1
+        elif o == '-t':
+            timecheck = True
+        elif o == '-p':
+            customSemester = True
+            match = re.search('(\w{4,6})(\d{4})',a)
+            season = match.group(1).upper()
+            year = match.group(2)
+
+
+        else:
+            assert False, "Unhandled Option"
+
+    if not checkClass or not checkSection:
+        print("You must specify both a class(-c) and class sections(-s). sections must be input as there 4 digit codes seperated by spaces")
+        sys.exit(2)
+
+    
+    term = getTerm(customSemester, season, year)
+
+    #print(classToCheck, sections.keys() ,term)
+    # Search query for the class
+    SITE_URL = "https://ntst.umd.edu/soc/search?courseId={}&sectionId=&termId={}&_openSectionsOnly=on&creditCompare=&credits=&courseLevelFilter=ALL&instructor=&_facetoface=on&_blended=on&_online=on&courseStartCompare=&courseStartHour=&courseStartMin=&courseStartAM=&courseEndHour=&courseEndMin=&courseEndAM=&teachingCenter=ALL&_classDay1=on&_classDay2=on&_classDay3=on&_classDay4=on&_classDay5=on".format(classToCheck, term)
+
+    # Used for 24hr checkin
     currentTime = time.mktime(time.gmtime())
+    checkTime = currentTime + secondsInADay
+    
+    while True:
+        checkSeats(SITE_URL, classToCheck)
 
-    if timecheck and currentTime >= checkTime:
-        checkTime = currentTime + secondsInADay
-        textMyself("The waitlist bot is still running")
+        currentTime = time.mktime(time.gmtime())
 
-    # No need to check every second so instead check every minute
-    time.sleep(60)
+        if timecheck and currentTime >= checkTime:
+            checkTime = currentTime + secondsInADay
+            textMyself("The waitlist bot is still running")
+
+        # No need to check every second so instead check every minute
+        time.sleep(60)
+
+
+main()

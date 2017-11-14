@@ -16,7 +16,7 @@ twilioNumber = "copy paste your number"
 myNumber = "use this format +15556665555"
 ```
 
-Before running, make sure to install the Twilio module.
+Before running, make sure to install the Twilio module (6.8.4).
 
 ```
 $ pip install twilio

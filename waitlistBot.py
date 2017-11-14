@@ -3,6 +3,8 @@ import time
 import getopt
 import sys
 import string
+import re
+import datetime
 from urllib.request import Request, urlopen
 from twilio.rest import TwilioRestClient
 try: # For Twilio auth
@@ -15,14 +17,16 @@ waitlistHTML = '<spanclass=\"section-id\">'
 seatHTML = '<spanclass=\"open-seats-count\">'
 
 secondsInADay = 86400
+now = datetime.datetime.now()
 
 classToCheck = ""
 sections = {}
 timecheck = False
+customSemester = False
 
 # Parse command line arguments
 try:
-    (opts, args) = getopt.getopt(sys.argv[1:], 'tc:s:')
+    (opts, args) = getopt.getopt(sys.argv[1:], 'tc:s:p:')
 except (getopt.GetoptError, err):
     # Print help information and exit:
     print(err)  # Will print something like "option -a not recognized"
@@ -42,6 +46,12 @@ for (o, a) in opts:
             sections[sect] = 1
     elif o == '-t':
         timecheck = True
+    elif o == '-p':
+    	customSemester = True
+    	match = re.search('(\w{4,6})(\d{4})',a)
+    	season = match.group(1).upper()
+    	year = match.group(2)
+
     else:
         assert False, "Unhandled Option"
 
@@ -49,8 +59,32 @@ if not checkClass or not checkSection:
     print("You must specify both a class(-c) and class sections(-s). sections must be input as there 4 digit codes seperated by spaces")
     sys.exit(2)
 
+#custom semester can take any semester
+if customSemester:
+	if season == 'SPRING':
+		seasonNum = '01'
+	elif season == 'SUMMER':
+		seasonNum = '05'
+	elif season == 'FALL':
+		seasonNum = '08'
+	else:
+		seasonNum = '12'
+
+	term = year + seasonNum
+#otherwise default to either spring or fall
+else:
+	year = str(now.year)
+	month = now.month
+	if month >= 2 and month <= 9:
+		seasonNum = '08'
+	else:
+		seasonNum = '01'
+
+	term = year + seasonNum
+
+
 # Search query for the class
-SITE_URL = "https://ntst.umd.edu/soc/search?courseId={}&sectionId=&termId=201801&_openSectionsOnly=on&creditCompare=&credits=&courseLevelFilter=ALL&instructor=&_facetoface=on&_blended=on&_online=on&courseStartCompare=&courseStartHour=&courseStartMin=&courseStartAM=&courseEndHour=&courseEndMin=&courseEndAM=&teachingCenter=ALL&_classDay1=on&_classDay2=on&_classDay3=on&_classDay4=on&_classDay5=on".format(classToCheck)
+SITE_URL = "https://ntst.umd.edu/soc/search?courseId={}&sectionId=&termId={}&_openSectionsOnly=on&creditCompare=&credits=&courseLevelFilter=ALL&instructor=&_facetoface=on&_blended=on&_online=on&courseStartCompare=&courseStartHour=&courseStartMin=&courseStartAM=&courseEndHour=&courseEndMin=&courseEndAM=&teachingCenter=ALL&_classDay1=on&_classDay2=on&_classDay3=on&_classDay4=on&_classDay5=on".format(classToCheck, term)
 
 
 # Function to use twilio API to send text message

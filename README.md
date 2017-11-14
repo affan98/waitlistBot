@@ -10,9 +10,9 @@ Create a file called `credentials.py` and include your account SID, auth token, 
 
 `credentials.py`
 ```Python
-Account_SID = "Your SID here"
-Auth_TOKEN = "Your Auth token here"
-myTwilioNumber = "copy paste your number"
+accountSID = "Your SID here"
+authToken = "Your Auth token here"
+twilioNumber = "copy paste your number"
 myNumber = "use this format +15556665555"
 ```
 

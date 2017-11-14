@@ -15,6 +15,7 @@ seatHTML = '<spanclass=\"open-seats-count\">'
 secondsInADay = 86400
 
 sections = {}
+sectionOrder = []
 
 
 # Function to use twilio API to send text message
@@ -41,11 +42,13 @@ def getTerm(customSemester, season, year):
     else:
     	year = str(now.year)
     	month = now.month
+        #if month is between february and september then we want to check for fall of this year
     	if month >= 2 and month <= 9:
     		seasonNum = '08'
     	else:
-    		seasonNum = '01'
-
+            seasonNum = '01'
+            if month != 1:
+                year = str(now.year + 1)
 
     return year + seasonNum
 
@@ -79,7 +82,10 @@ def checkSeats(url, classToCheck):
         sections[key] = numberOfSeats
 
     # If a section has an open seat then send a message
-    for key in sections:
+    sortedSections = sorted(sectionOrder)
+
+    for key in sortedSections:
+        print("current key is", key)
         if sections[key] != 0:
             textMyself("A seat has opened up for {} {}. Get it quick!".format(classToCheck, key))
             time.sleep(540)  # Wait 10 minutes so this doesnt keep sending you texts non stop
@@ -112,6 +118,7 @@ def main():
         elif o == '-s':
             checkSection = True
             for sect in a.split():
+                sectionOrder.append(sect)
                 sections[sect] = 1
         elif o == '-t':
             timecheck = True
@@ -135,7 +142,6 @@ def main():
     #print(classToCheck, sections.keys() ,term)
     # Search query for the class
     SITE_URL = "https://ntst.umd.edu/soc/search?courseId={}&sectionId=&termId={}&_openSectionsOnly=on&creditCompare=&credits=&courseLevelFilter=ALL&instructor=&_facetoface=on&_blended=on&_online=on&courseStartCompare=&courseStartHour=&courseStartMin=&courseStartAM=&courseEndHour=&courseEndMin=&courseEndAM=&teachingCenter=ALL&_classDay1=on&_classDay2=on&_classDay3=on&_classDay4=on&_classDay5=on".format(classToCheck, term)
-
     # Used for 24hr checkin
     currentTime = time.mktime(time.gmtime())
     checkTime = currentTime + secondsInADay

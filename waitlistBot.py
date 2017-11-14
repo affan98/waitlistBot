@@ -96,11 +96,8 @@ def textMyself(message):
 
 
 
-def main():
-	# Used for 24hr checkin
-    currentTime = time.mktime(time.gmtime())
-    checkTime = currentTime + secondsInADay
-    
+def checkSeats():
+
     req = Request(SITE_URL, headers={'User-Agent': 'Mozilla/5.0'})
 
     # Gets the HTML from the UMD schedule of classes and removes white space
@@ -136,13 +133,20 @@ def main():
             textMyself("A seat has opened up for {} {}. Get it quick!".format(classToCheck, key))
             time.sleep(540)  # Wait 10 minutes so this doesnt keep sending you texts non stop
 
+
+
+# Used for 24hr checkin
+currentTime = time.mktime(time.gmtime())
+checkTime = currentTime + secondsInADay
+
+while True:
+    checkSeats()
+
+    currentTime = time.mktime(time.gmtime())
+
     if timecheck and currentTime >= checkTime:
         checkTime = currentTime + secondsInADay
         textMyself("The waitlist bot is still running")
-
-# Run main loop
-while True:
-    main()
 
     # No need to check every second so instead check every minute
     time.sleep(60)

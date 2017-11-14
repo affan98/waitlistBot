@@ -11,8 +11,8 @@ except ImportError:
     raise IOError("You must include a credentials.py file with the following fields: accountSID, authToken, myNumber, and twilioNumber. See README.")
 
 # To find the location of each section
-waitlistHTML = '<spanclass="section-id">'
-seatHTML = '<spanclass="open-seats-count">'
+waitlistHTML = '<spanclass=\"section-id\">'
+seatHTML = '<spanclass=\"open-seats-count\">'
 
 secondsInADay = 86400
 
@@ -23,9 +23,9 @@ timecheck = False
 # Parse command line arguments
 try:
     (opts, args) = getopt.getopt(sys.argv[1:], 'tc:s:')
-except getopt.GetoptError, err:
+except (getopt.GetoptError, err):
     # Print help information and exit:
-    print err  # Will print something like "option -a not recognized"
+    print(err)  # Will print something like "option -a not recognized"
     usage()
     sys.exit(2)
 
@@ -46,11 +46,11 @@ for (o, a) in opts:
         assert False, "Unhandled Option"
 
 if not checkClass or not checkSection:
-    print "You must specify both a class(-c) and class sections(-s). sections must be input as there 4 digit codes seperated by spaces"
+    print("You must specify both a class(-c) and class sections(-s). sections must be input as there 4 digit codes seperated by spaces")
     sys.exit(2)
 
 # Search query for the class
-SITE_URL = "https://ntst.umd.edu/soc/search?courseId={}&sectionId=&termId=201708&_openSectionsOnly=on&creditCompare=&credits=&courseLevelFilter=ALL&instructor=&_facetoface=on&_blended=on&_online=on&courseStartCompare=&courseStartHour=&courseStartMin=&courseStartAM=&courseEndHour=&courseEndMin=&courseEndAM=&teachingCenter=ALL&_classDay1=on&_classDay2=on&_classDay3=on&_classDay4=on&_classDay5=on".format(classToCheck)
+SITE_URL = "https://ntst.umd.edu/soc/search?courseId={}&sectionId=&termId=201801&_openSectionsOnly=on&creditCompare=&credits=&courseLevelFilter=ALL&instructor=&_facetoface=on&_blended=on&_online=on&courseStartCompare=&courseStartHour=&courseStartMin=&courseStartAM=&courseEndHour=&courseEndMin=&courseEndAM=&teachingCenter=ALL&_classDay1=on&_classDay2=on&_classDay3=on&_classDay4=on&_classDay5=on".format(classToCheck)
 
 
 # Function to use twilio API to send text message
@@ -66,7 +66,6 @@ checkTime = currentTime + secondsInADay
 
 def main():
     currentTime = time.mktime(time.gmtime())
-
     req = Request(SITE_URL, headers={'User-Agent': 'Mozilla/5.0'})
 
     # Gets the HTML from the UMD schedule of classes and removes white space
@@ -86,7 +85,8 @@ def main():
         location += len(seatHTML)
 
         try:
-            numberOfSeats = int(siteHTML[location])
+        	numberOfSeats = int(siteHTML[location])
+
         except ValueError:
             continue
         finally:

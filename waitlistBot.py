@@ -46,6 +46,7 @@ def getTerm(customSemester, season, year):
     	if month >= 2 and month <= 9:
     		seasonNum = '08'
     	else:
+        #otherwise we check for spring.
             seasonNum = '01'
             if month != 1:
                 year = str(now.year + 1)
@@ -64,8 +65,11 @@ def checkSeats(url, classToCheck):
         siteHTML = siteHTML.decode(encoding)
         siteHTML = "".join(siteHTML.split())
 
+    # If a section has an open seat then send a message
+    sortedSections = sorted(sectionOrder)
+
     # Updates the dictionary with the correct number of seats for each section
-    for key in sections:
+    for key in sortedSections:
         sectionHTML = waitlistHTML + key
         location = siteHTML.find(sectionHTML)
         location = location + siteHTML[location:].find(seatHTML)
@@ -81,11 +85,8 @@ def checkSeats(url, classToCheck):
 
         sections[key] = numberOfSeats
 
-    # If a section has an open seat then send a message
-    sortedSections = sorted(sectionOrder)
-
     for key in sortedSections:
-        print("current key is", key)
+        print(key, sections[key])
         if sections[key] != 0:
             textMyself("A seat has opened up for {} {}. Get it quick!".format(classToCheck, key))
             time.sleep(540)  # Wait 10 minutes so this doesnt keep sending you texts non stop

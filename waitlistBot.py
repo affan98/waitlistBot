@@ -140,7 +140,6 @@ def main():
     
     term = getTerm(customSemester, season, year)
 
-    #print(classToCheck, sections.keys() ,term)
     # Search query for the class
     SITE_URL = "https://ntst.umd.edu/soc/search?courseId={}&sectionId=&termId={}&_openSectionsOnly=on&creditCompare=&credits=&courseLevelFilter=ALL&instructor=&_facetoface=on&_blended=on&_online=on&courseStartCompare=&courseStartHour=&courseStartMin=&courseStartAM=&courseEndHour=&courseEndMin=&courseEndAM=&teachingCenter=ALL&_classDay1=on&_classDay2=on&_classDay3=on&_classDay4=on&_classDay5=on".format(classToCheck, term)
     # Used for 24hr checkin

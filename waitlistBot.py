@@ -1,5 +1,5 @@
 # Dependencies
-import time, getopt, sys, string, re, datetime
+import time, getopt, sys, string, re, datetime, daemon
 from urllib.request import Request, urlopen
 from twilio.rest import TwilioRestClient
 
@@ -86,10 +86,11 @@ def checkSeats(url, classToCheck):
         sections[key] = numberOfSeats
 
     for key in sortedSections:
-        print(key, sections[key])
+        #print(key, sections[key])
         if sections[key] != 0:
+            #print("A seat has opened up for {} {}. Get it quick!".format(classToCheck, key))
             textMyself("A seat has opened up for {} {}. Get it quick!".format(classToCheck, key))
-            time.sleep(540)  # Wait 10 minutes so this doesnt keep sending you texts non stop
+            sys.exit()
 
 
 def main():
@@ -159,4 +160,5 @@ def main():
         time.sleep(60)
 
 
-main()
+with daemon.DaemonContext():
+    main()
